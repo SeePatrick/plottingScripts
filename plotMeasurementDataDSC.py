@@ -62,7 +62,7 @@ measurementDataFrame = DataFrame(data)
 print(measurementDataFrame)
 
 dataPlot = sns.lineplot(data = measurementDataFrame, x = 'Temperature', y = 'Data', hue = 'Measurement')
-dataPlot.set(xlabel = "Temperature [$C$]", ylabel = 'DSC [uV/mg]', title = 'DSC Measurement')
+dataPlot.set(xlabel = 'Temperature [$°C$]', ylabel = 'DSC [mW/mg]', title = 'DSC Measurement')
 dataPlot.figure.savefig('DSCPlot.jpg')
 
 ##Clear figure in order to save the zoomed version (just Seaborn stuff)
