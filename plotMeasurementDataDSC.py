@@ -61,8 +61,8 @@ for currentFile in measurementFileList:
             if (lineCounter > 32):
                 currentValuePair = re.findall(singleValuePattern, currentLine)
                 if(currentValuePair != []):
-
-                    if(len(temperature) < 166): #Only take temperature values of first measurement file (drop others)
+                    #Skip additional datapoints if measurements of same sample have different lengths
+                    if(len(temperature) < 166):
                         temperature.append(float(currentValuePair[0]))
                     
                     if(len(currentData) < 166):
