@@ -2,6 +2,7 @@ import re               #Regular Expression
 import pandas as pd     #Pandas Dataframes
 import seaborn as sns   #Seaborn Plots
 import os               #File/Folder Operations
+import numpy as np      #Linalg operations
 
 from pandas import DataFrame
 
@@ -16,6 +17,19 @@ measurementFileList = []
 
 #regular expression separating x and y value in one line of the dsc file
 singleValuePattern = re.compile(r'(\d+[^\t]\d+)')
+
+#Check whether two string differ in one character (if strings are the same, still return false)
+def matchNames(firstName, secondName):
+    match = False
+
+    for firstCheck, secondCheck in zip(firstName, secondName):
+        if firstCheck != secondCheck:
+            if match:
+                return False
+            else:
+                match = True
+
+    return match
 
 #Get path to this script (excluding 22 char name of script)
 rootDirectory = os.path.realpath(__file__)[:-25]
@@ -35,44 +49,71 @@ print(measurementFileList)
 subFolderList = [item for item in os.listdir(rootDirectory) if os.path.isdir(os.path.join(rootDirectory, item))]
 
 currentData = []
+allData = []
 temperature = []
-label = []
+measurementFilelabels = []
 
-fileCounter = 0
 lineCounter = 0
 
 for currentFile in measurementFileList:
     with open(currentFile) as dataFile:
         for currentLine in dataFile:
-            if (lineCounter > 33):
+            if (lineCounter > 32):
                 currentValuePair = re.findall(singleValuePattern, currentLine)
                 if(currentValuePair != []):
-                    temperature.append(float(currentValuePair[0]))
-                    currentData.append(float(currentValuePair[2]))          
+
+                    if(len(temperature) < 166): #Only take temperature values of first measurement file (drop others)
+                        temperature.append(float(currentValuePair[0]))
+                    
+                    if(len(currentData) < 166):
+                        currentData.append(float(currentValuePair[2]))          
         
-                    label.append(currentFile)
             lineCounter += 1
-    fileCounter += 1
+    
+    measurementFilelabels.append(currentFile)
     lineCounter = 0
 
-data = {'Temperature' : temperature, 'Data': currentData, 'Measurement': label}
+    allData.append(np.array(currentData))
+    currentData = []
 
-measurementDataFrame = DataFrame(data)
+allDataNumpy = np.transpose(np.asarray(allData))
+
+measurementDataFrame = DataFrame(index=temperature, data=allDataNumpy, columns=measurementFilelabels)
 
 print(measurementDataFrame)
 
-dataPlot = sns.lineplot(data = measurementDataFrame, x = 'Temperature', y = 'Data', hue = 'Measurement')
-dataPlot.set(xlabel = 'Temperature [$°C$]', ylabel = 'DSC [mW/mg]', title = 'DSC Measurement')
-dataPlot.figure.savefig('DSCPlot.jpg')
+while True:
+    #Work out data columns of the same sample
+    columnsToComputeMeanOf = []
+    lastLabel = ''
+    for currentLabel in measurementDataFrame.columns:
 
-##Clear figure in order to save the zoomed version (just Seaborn stuff)
-#dataPlot.figure.clf()
-#
-##Zoomed Plot: Plot peaks only  
-#startingIndex = ramanShift.index(900, 1600, 1700)
-#endingIndex = ramanShift.index(1700, 3000, 4000)
-#
-#zommedData = measurementDataFrame.iloc[startingIndex:endingIndex, :]
-#zoomedPlot = sns.lineplot(data=zommedData)
-#zoomedPlot.set(xlabel = "Raman Shift [$cm^{-1}$]", ylabel = 'Intensity', title = 'Zoomed Raman Measurement')
-#zoomedPlot.figure.savefig('ZoomedRamanPlot.jpg')
+        if lastLabel == '':
+            lastLabel = currentLabel
+        else:
+            if matchNames(currentLabel, lastLabel):
+                if(len(columnsToComputeMeanOf) == 0):
+                    columnsToComputeMeanOf.append(lastLabel)
+                columnsToComputeMeanOf.append(currentLabel)
+                lastLabel = currentLabel
+
+            else:
+                break
+
+    if len(columnsToComputeMeanOf) == 0:
+        break 
+    else:
+        #Compute mean of selected columns
+        dataToMean = measurementDataFrame[columnsToComputeMeanOf]
+        dataToMean = dataToMean.mean(axis = 1)
+
+        #Delete old columns from dataframe and add their mean instead
+        measurementDataFrame = measurementDataFrame.drop(columns=columnsToComputeMeanOf)
+        measurementDataFrame[columnsToComputeMeanOf[0][:-6] + '_Mean'] = dataToMean 
+
+        print('Worked Data: ')
+        print(measurementDataFrame)
+
+dataPlot = sns.lineplot(data = measurementDataFrame)
+dataPlot.set(xlabel = 'Temperature [°C]', ylabel = 'DSC [mW/mg]', title = 'DSC Measurement')
+dataPlot.figure.savefig('DSCPlot.jpg')

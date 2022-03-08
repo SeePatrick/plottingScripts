@@ -75,6 +75,7 @@ for currentFile in measurementFileList:
 
 #Convert back to numpy array and to correct form for dataframe
 normalizedDataNumpy = np.transpose(np.asarray(normalizedData))
+print(normalizedDataNumpy.shape)
 
 measurementDataFrame = DataFrame(index=wavenumber, data=normalizedDataNumpy, columns=measurementFilelabels)
 
