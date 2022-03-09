@@ -16,7 +16,7 @@ currentFileList = []
 measurementFileList = []
 
 #regular expression separating x and y value in one line of the dsc file
-singleValuePattern = re.compile(r'(\d+[^\t]\d+)')
+singleValuePattern = re.compile(r'(-?\d+.\d+e-\d+)|(-?\d+.\d+)')
 
 #Check whether two string differ in one character (if strings are the same, still return false)
 def matchNames(firstName, secondName):
@@ -60,13 +60,19 @@ for currentFile in measurementFileList:
         for currentLine in dataFile:
             if (lineCounter > 32):
                 currentValuePair = re.findall(singleValuePattern, currentLine)
-                if(currentValuePair != []):
+                if(currentValuePair[0] != ('','')):
                     #Skip additional datapoints if measurements of same sample have different lengths
-                    if(len(temperature) < 166):
-                        temperature.append(float(currentValuePair[0]))
+                    if((len(temperature) < 166)):
+                        if(currentValuePair[0][0] != ''):
+                            temperature.append(float(currentValuePair[0][0]))
+                        else:
+                            temperature.append(float(currentValuePair[0][1]))
                     
                     if(len(currentData) < 166):
-                        currentData.append(float(currentValuePair[2]))          
+                        if(currentValuePair[2][0] != ''):
+                            currentData.append(float(currentValuePair[2][0])) 
+                        else:
+                            currentData.append(float(currentValuePair[2][1]))         
         
             lineCounter += 1
     
