@@ -115,7 +115,7 @@ while True:
 
         #Delete old columns from dataframe and add their mean instead
         measurementDataFrame = measurementDataFrame.drop(columns=columnsToComputeMeanOf)
-        measurementDataFrame[columnsToComputeMeanOf[0][:-6] + '_Mean'] = dataToMean 
+        measurementDataFrame[columnsToComputeMeanOf[0][:-10] + '_Mean'] = dataToMean 
 
         print('Worked Data: ')
         print(measurementDataFrame)
@@ -125,5 +125,4 @@ dataPlot.set_xlabel('Temperature [°C]', fontsize=15)
 dataPlot.set_ylabel('DSC [mW/mg]', fontsize=15)
 dataPlot.axes.set_title('DSC Measurement', fontsize=20)
 dataPlot.tick_params(labelsize=10)
-#dataPlot.set(xlabel = 'Temperature [°C]', ylabel = 'DSC [mW/mg]', title = 'DSC Measurement')
 dataPlot.figure.savefig('DSCPlot.jpg')
